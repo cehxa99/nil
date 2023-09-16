@@ -1,0 +1,42 @@
+import (
+        "context"
+        "fmt"
+        "io"
+
+        automl "cloud.google.com/go/automl/apiv1"
+        "cloud.google.com/go/automl/apiv1/automlpb"
+)
+
+// getModelEvaluation gets a model evaluation.
+func getModelEvaluation(w io.Writer, projectID string, location string, modelID string, modelEvaluationID string) error {
+        // projectID := "my-project-id"
+        // location := "us-central1"
+        // modelID := "TRL123456789..."
+        // modelEvaluationID := "123456789..."
+
+        ctx := context.Background()
+        client, err := automl.NewClient(ctx)
+        if err != nil {
+                return fmt.Errorf("NewClient: %w", err)
+        }
+        defer client.Close()
+
+        req := &automlpb.GetModelEvaluationRequest{
+                Name: fmt.Sprintf("projects/%s/locations/%s/models/%s/modelEvaluations/%s", projectID, location, modelID, modelEvaluationID),
+        }
+
+        evaluation, err := client.GetModelEvaluation(ctx, req)
+        if err != nil {
+                return fmt.Errorf("GetModelEvaluation: %w", err)
+        }
+
+        fmt.Fprintf(w, "Model evaluation name: %v\n", evaluation.GetName())
+        fmt.Fprintf(w, "Model annotation spec id: %v\n", evaluation.GetAnnotationSpecId())
+        fmt.Fprintf(w, "Create Time:\n")
+        fmt.Fprintf(w, "\tseconds: %v\n", evaluation.GetCreateTime().GetSeconds())
+        fmt.Fprintf(w, "\tnanos: %v\n", evaluation.GetCreateTime().GetNanos())
+        fmt.Fprintf(w, "Evaluation example count: %v\n", evaluation.GetEvaluatedExampleCount())
+        fmt.Fprintf(w, "Sentiment analysis model evaluation metrics: %v\n", evaluation.GetTextSentimentEvaluationMetrics())
+
+        return nil
+}
